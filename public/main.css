@@ -1,0 +1,16 @@
+.wc-metaboxes-wrapper#product_aff_cf .expand-close {
+    float: right;
+    line-height: 28px;
+}
+.wc-metaboxes-wrapper .expand-close {
+    margin-right: 2px;
+    color: #777;
+    font-size: 12px;
+    font-style: italic;
+}
+
+.woocommerce_aff_data {
+    width: 100%;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
+}
