@@ -7,6 +7,10 @@
  * Author: Ánh Dương
  * Author URI: https://anhduong.us
  */
+// Load autoload vendor
+require __DIR__.'/vendor/autoload.php';
+
+use AffCustomField\Model\AffLink;
 
 /**
  * Add a custom product tab.
@@ -31,6 +35,7 @@ function aff_options_product_tab_content() {
 
     global $post;
 
+    $aff_links = AffLink::where('visible', 1)->get();
     // Note the 'id' attribute needs to match the 'target' parameter set above
 
     include(__DIR__ . '/src/templates/aff_tab_content.php');
@@ -56,22 +61,6 @@ function add_admin_style($hook) {
     }
 }
 
-
-// /**
-//  * Save the custom fields.
-//  */
-// function save_giftcard_option_fields( $post_id ) {
-
-//     $allow_personal_message = isset( $_POST['_allow_personal_message'] ) ? 'yes' : 'no';
-//     update_post_meta( $post_id, '_allow_personal_message', $allow_personal_message );
-
-//     if ( isset( $_POST['_valid_for_days'] ) ) :
-//         update_post_meta( $post_id, '_valid_for_days', absint( $_POST['_valid_for_days'] ) );
-//     endif;
-
-// }
-// add_action( 'woocommerce_process_product_meta', 'save_giftcard_option_fields'  );
-
 /**
  * Ajax save aff data
  */
@@ -88,8 +77,7 @@ function woocommerce_add_aff()
         wp_die( -1 );
     }
 
-    $i             = absint( $_POST['i'] );
-    $metabox_class = array();
+    $i = absint( $_POST['i'] );
 
     include __DIR__ . '/src/templates/aff_tab_content_item.php';
     wp_die();
@@ -110,33 +98,16 @@ function woocommerce_save_aff()
     try {
         parse_str( wp_unslash( $_POST['data'] ), $data ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
-        $attributes   = WC_Meta_Box_Product_Data::prepare_attributes( $data );
         $product_id   = absint( wp_unslash( $_POST['post_id'] ) );
-        $product_type = ! empty( $_POST['product_type'] ) ? wc_clean( wp_unslash( $_POST['product_type'] ) ) : 'simple';
-        $classname    = WC_Product_Factory::get_product_classname( $product_id, $product_type );
-        $product      = new $classname( $product_id );
-
-        $product->set_attributes( $attributes );
-        $product->save();
+        $affs   = save_affs( $data , $product_id);
 
         ob_start();
-        $attributes = $product->get_attributes( 'edit' );
         $i          = -1;
-        if ( ! empty( $data['attribute_names'] ) ) {
-            foreach ( $data['attribute_names'] as $attribute_name ) {
-                $attribute = isset( $attributes[ sanitize_title( $attribute_name ) ] ) ? $attributes[ sanitize_title( $attribute_name ) ] : false;
-                if ( ! $attribute ) {
-                    continue;
-                }
+        $aff_links = \AffCustomField\Model\AffLink::where('visible', 1)->get();
+        if(!empty($aff_links)){
+            foreach ( $aff_links as $item ) {
                 $i++;
-                $metabox_class = array();
-
-                if ( $attribute->is_taxonomy() ) {
-                    $metabox_class[] = 'taxonomy';
-                    $metabox_class[] = $attribute->get_name();
-                }
-
-                include __DIR__ . '/admin/meta-boxes/views/html-product-attribute.php';
+                include __DIR__ . '/src/templates/aff_tab_content_item.php';
             }
         }
 
@@ -156,56 +127,46 @@ function woocommerce_save_aff()
  *
  * @return array
  */
-// function prepare_affs( $data = false ) {
-//     $affs = array();
+function save_affs( $data = false, int $product_id) {
 
-//     if ( ! $data ) {
-//         $data = stripslashes_deep( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
-//     }
+    if($product_id == 0 || empty($product_id))
+        return false;
 
-//     if ( isset( $data['aff_titles'], $data['attribute_values'] ) ) {
-//         $attribute_names         = $data['attribute_names'];
-//         $attribute_values        = $data['attribute_values'];
-//         $attribute_visibility    = isset( $data['attribute_visibility'] ) ? $data['attribute_visibility'] : array();
-//         $attribute_variation     = isset( $data['attribute_variation'] ) ? $data['attribute_variation'] : array();
-//         $attribute_position      = $data['attribute_position'];
-//         $attribute_names_max_key = max( array_keys( $attribute_names ) );
+    $affs = array();
 
-//         for ( $i = 0; $i <= $attribute_names_max_key; $i++ ) {
-//             if ( empty( $attribute_names[ $i ] ) || ! isset( $attribute_values[ $i ] ) ) {
-//                 continue;
-//             }
-//             $attribute_id   = 0;
-//             $attribute_name = wc_clean( esc_html( $attribute_names[ $i ] ) );
+    if ( ! $data ) {
+        $data = stripslashes_deep( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+    }
 
-//             if ( 'pa_' === substr( $attribute_name, 0, 3 ) ) {
-//                 $attribute_id = wc_attribute_taxonomy_id_by_name( $attribute_name );
-//             }
+    if ( isset( $data['aff_title'], $data['aff_link'] ) ) {
+        $aff_title         = $data['aff_title'];
+        $aff_type          = $data['aff_type'];
+        $aff_link          = $data['aff_link'];
+        $aff_price         = isset( $data['aff_price'] ) ? $data['aff_price'] : 0;
+        $aff_position      = $data['aff_position'];
+        $aff_title_max_key = max( array_keys( $aff_title ) );
 
-//             $options = isset( $attribute_values[ $i ] ) ? $attribute_values[ $i ] : '';
+        for ( $i = 0; $i <= $aff_title_max_key; $i++ ) {
+            if ( empty( $aff_title[ $i ] ) || ! isset( $aff_link[ $i ] ) ) {
+                continue;
+            }
 
-//             if ( is_array( $options ) ) {
-//                 // Term ids sent as array.
-//                 $options = wp_parse_id_list( $options );
-//             } else {
-//                 // Terms or text sent in textarea.
-//                 $options = 0 < $attribute_id ? wc_sanitize_textarea( esc_html( wc_sanitize_term_text_based( $options ) ) ) : wc_sanitize_textarea( esc_html( $options ) );
-//                 $options = wc_get_text_affs( $options );
-//             }
+            $aff_title    = wc_clean(wp_unslash($aff_title[$i]));
+            $aff_type     = wc_clean(wp_unslash($aff_type[$i]));
+            $aff_link     = esc_url_raw(wp_unslash( $aff_link[$i]));
+            $aff_price    = wc_clean(wp_unslash($aff_price[$i]));
+            $aff_position = wc_clean(wp_unslash($aff_position[$i]));
 
-//             if ( empty( $options ) ) {
-//                 continue;
-//             }
+            $aff_links = new AffLink();
+            $aff_links->title = $aff_title;
+            $aff_links->type = $aff_type;
+            $aff_links->link = $aff_link;
+            $aff_links->price = $aff_price;
+            $aff_links->position = $aff_position;
+            $aff_link->product_id = $product_id;
 
-//             $attribute = new WC_Product_Attribute();
-//             $attribute->set_id( $attribute_id );
-//             $attribute->set_name( $attribute_name );
-//             $attribute->set_options( $options );
-//             $attribute->set_position( $attribute_position[ $i ] );
-//             $attribute->set_visible( isset( $attribute_visibility[ $i ] ) );
-//             $attribute->set_variation( isset( $attribute_variation[ $i ] ) );
-//             $affs[] = apply_filters( 'woocommerce_admin_meta_boxes_prepare_attribute', $attribute, $data, $i );
-//         }
-//     }
-//     return $attributes;
-// }
+            $aff_links->save();
+        }
+    }
+    return true;
+}

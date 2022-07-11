@@ -14,7 +14,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	</div>
 	<div class="product_aff_cf wc-metaboxes">
 		<?php
-			// include __DIR__ . '/aff_tab_content_item.php';
+			$i          = -1;
+	        if(!empty($aff_links)){
+	            foreach ( $aff_links as $item ) {
+	                $i++;
+	                include __DIR__ . '/src/templates/aff_tab_content_item.php';
+	            }
+	        }
 		?>
 	</div>
 	<div class="toolbar">
