@@ -1,0 +1,2 @@
+# aff-links
+Affiliate link
