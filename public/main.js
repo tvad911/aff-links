@@ -106,7 +106,7 @@ jQuery( function( $ ) {
 			post_id     : woocommerce_admin_meta_boxes.post_id,
 			product_type: $( '#product-type' ).val(),
 			data        : original_data.serialize(),
-			action      : 'woocommerce_save_affs',
+			action      : 'woocommerce_save_aff',
 			security    : aff_tab_var.save_aff_nonce
 		};
 

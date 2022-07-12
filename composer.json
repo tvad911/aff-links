@@ -1,11 +1,10 @@
 {
     "require": {
-        "tareq1988/wp-eloquent": "dev-master",
-        "illuminate/collections": "v8.9.0"
+        "tareq1988/wp-eloquent": "dev-master"
     },
     "autoload": {
         "psr-4": {
-            "AffCustomField\\": "src/"
+            "AnhDuong\\": "src/"
         }
     }
 }

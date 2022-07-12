@@ -14,13 +14,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 	</div>
 	<div class="product_aff_cf wc-metaboxes">
 		<?php
-			$i          = -1;
-	        if(!empty($aff_links)){
-	            foreach ( $aff_links as $item ) {
-	                $i++;
-	                include __DIR__ . '/src/templates/aff_tab_content_item.php';
-	            }
-	        }
+			if(isset($_GET['post']))
+			{
+				$i          = -1;
+				$product_id = absint( wp_unslash( $_GET['post'] ) );
+				$affData = \AnhDuong\Models\AffLink::where('product_id', $product_id)->first();
+		        if(!empty($affData)){
+		            $items = json_decode($affData->data);
+		            foreach ( $items as $item ) {
+		                $i++;
+		                include __DIR__ . '/../templates/aff_tab_content_item.php';
+		            }
+		        }
+			}
 		?>
 	</div>
 	<div class="toolbar">

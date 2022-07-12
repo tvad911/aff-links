@@ -22,11 +22,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 							'shopee' => __( 'Shopee', 'woocommerce' ),
 							'lazada' => __( 'Lazada', 'woocommerce' ),
 							'tiki'   => __( 'Tiki', 'woocommerce' )
-							)
-						)
+							),
+						'value' => !empty($item) ? $item->type : 'shopee'
+						),
 					);
 			?>
-			<input type="hidden" name="aff_position[<?php echo esc_attr( $i ); ?>]" class="aff_position" value="<?php if(!empty($item) && !empty($item->id)) echo $item->position; ?>" />
+			<input type="hidden" name="aff_position[<?php echo esc_attr( $i ); ?>]" class="aff_position" value="<?php if(!empty($item)) echo $item->position; ?>" />
 		</div>
 		<div class="options_group">
 			<?php
@@ -36,7 +37,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 						'label' => __( 'Title', 'woocommerce' ),
 						'name'  => 'aff_title['. esc_attr( $i ) .']',
 						'desc_tip'    => 'true',
-						'description' => __( 'Enter title here.', 'woocommerce' )
+						'description' => __( 'Enter title here.', 'woocommerce' ),
+						'value' => !empty($item) ? $item->title : ''
 					)
 				);
 			?>
@@ -49,7 +51,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 						'label'       => __( 'Price', 'woocommerce' ),
 						'name'  => 'aff_price['. esc_attr( $i ) .']',
 						'desc_tip'    => 'true',
-						'description' => __( 'Enter price here.', 'woocommerce' )
+						'description' => __( 'Enter price here.', 'woocommerce' ),
+						'value' => !empty($item) ? $item->price : ''
 					)
 				);
 			?>
@@ -62,7 +65,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 						'label' => __( 'Link', 'woocommerce' ),
 						'name'  => 'aff_link['. esc_attr( $i ) .']',
 						'desc_tip'    => 'true',
-						'description' => __( 'Enter link here.', 'woocommerce' )
+						'description' => __( 'Enter link here.', 'woocommerce' ),
+						'value' => !empty($item) ? $item->link : ''
 					)
 				);
 			?>

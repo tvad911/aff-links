@@ -1,6 +1,6 @@
 <?php
 
-namespace AffCustomField\Models;
+namespace AnhDuong\Models;
 
 use WeDevs\ORM\Eloquent\Model;
 
@@ -11,19 +11,14 @@ class AffLink extends Model {
      *
      * @var string
      */
-    protected $table = 'tips_woocommerce_aff_link';
+    protected $table = 'woocommerce_aff_links';
 
     /**
      * Columns that can be edited - IE not primary key or timestamps if being used
      */
     protected $fillable = [
         'product_id',
-        'title',
-        'type',
-        'link',
-        'price',
-        'position',
-        'visible'
+        'data'
     ];
 
     /**
@@ -58,7 +53,7 @@ class AffLink extends Model {
         if ( isset( $this->table ) ){
             $prefix =  $this->getConnection()->db->prefix;
 
-            return $prefix . $this->table;
+            return substr($this->table, 0, strlen($prefix)) === $prefix ? $this->table : $prefix . $this->table;
         }
 
         return parent::getTable();

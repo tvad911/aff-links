@@ -8,9 +8,11 @@
  * Author URI: https://anhduong.us
  */
 // Load autoload vendor
-require __DIR__.'/vendor/autoload.php';
+require 'vendor/autoload.php';
 
-use AffCustomField\Model\AffLink;
+use AnhDuong\Models\AffLink;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 /**
  * Add a custom product tab.
@@ -35,10 +37,9 @@ function aff_options_product_tab_content() {
 
     global $post;
 
-    $aff_links = AffLink::where('visible', 1)->get();
     // Note the 'id' attribute needs to match the 'target' parameter set above
 
-    include(__DIR__ . '/src/templates/aff_tab_content.php');
+    include(__DIR__ . '/templates/aff_tab_content.php');
 
 }
 add_filter( 'woocommerce_product_data_panels', 'aff_options_product_tab_content' ); // WC 2.6 and up
@@ -79,7 +80,7 @@ function woocommerce_add_aff()
 
     $i = absint( $_POST['i'] );
 
-    include __DIR__ . '/src/templates/aff_tab_content_item.php';
+    include __DIR__ . '/templates/aff_tab_content_item.php';
     wp_die();
 }
 
@@ -89,7 +90,7 @@ function woocommerce_save_aff()
 {
     check_ajax_referer( 'save_aff_nonce', 'security' );
 
-    if ( ! current_user_can( 'edit_products' ) || ! isset( $_POST['data'], $_POST['post_id'] ) ) {
+    if ( ! current_user_can( 'edit_products' ) || ! isset( $_POST['data'], $_POST['post'] ) ) {
         wp_die( -1 );
     }
 
@@ -98,16 +99,17 @@ function woocommerce_save_aff()
     try {
         parse_str( wp_unslash( $_POST['data'] ), $data ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
-        $product_id   = absint( wp_unslash( $_POST['post_id'] ) );
-        $affs   = save_affs( $data , $product_id);
+        $product_id = absint( wp_unslash( $_POST['post'] ) );
+        $affs       = save_affs( $data , $product_id);
 
         ob_start();
         $i          = -1;
-        $aff_links = \AffCustomField\Model\AffLink::where('visible', 1)->get();
-        if(!empty($aff_links)){
-            foreach ( $aff_links as $item ) {
+        $affData = AffLink::where('product_id', $product_id)->first();
+        if(!empty($affData)){
+            $items = json_decode($affData->data);
+            foreach ( $items as $item ) {
                 $i++;
-                include __DIR__ . '/src/templates/aff_tab_content_item.php';
+                include __DIR__ . '/templates/aff_tab_content_item.php';
             }
         }
 
@@ -139,6 +141,7 @@ function save_affs( $data = false, int $product_id) {
     }
 
     if ( isset( $data['aff_title'], $data['aff_link'] ) ) {
+
         $aff_title         = $data['aff_title'];
         $aff_type          = $data['aff_type'];
         $aff_link          = $data['aff_link'];
@@ -157,16 +160,27 @@ function save_affs( $data = false, int $product_id) {
             $aff_price    = wc_clean(wp_unslash($aff_price[$i]));
             $aff_position = wc_clean(wp_unslash($aff_position[$i]));
 
-            $aff_links = new AffLink();
-            $aff_links->title = $aff_title;
-            $aff_links->type = $aff_type;
-            $aff_links->link = $aff_link;
-            $aff_links->price = $aff_price;
-            $aff_links->position = $aff_position;
-            $aff_link->product_id = $product_id;
+            $affJson = collect([
+                'title'    => $aff_title,
+                'type'     => $aff_type,
+                'link'     => $aff_link,
+                'price'    => $aff_price,
+                'position' => $aff_position,
+                'visible'  => true,
+            ]);
 
-            $aff_links->save();
+            array_push($affs, $affJson);
         }
+
+        $affData = AffLink::where('product_id', $product_id)->first();
+        if(empty($affData)){
+            $affData = new AffLink();
+        }
+
+        $affData->product_id = $product_id;
+        $affData->data = json_encode($affs);
+        $affData->save();
     }
+
     return true;
 }
