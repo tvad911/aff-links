@@ -90,7 +90,7 @@ function woocommerce_save_aff()
 {
     check_ajax_referer( 'save_aff_nonce', 'security' );
 
-    if ( ! current_user_can( 'edit_products' ) || ! isset( $_POST['data'], $_POST['post'] ) ) {
+    if ( !current_user_can( 'edit_products' ) || !isset( $_POST['data'], $_POST['post_id'] ) ) {
         wp_die( -1 );
     }
 
@@ -99,7 +99,7 @@ function woocommerce_save_aff()
     try {
         parse_str( wp_unslash( $_POST['data'] ), $data ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
-        $product_id = absint( wp_unslash( $_POST['post'] ) );
+        $product_id = absint( wp_unslash( $_POST['post_id'] ) );
         $affs       = save_affs( $data , $product_id);
 
         ob_start();
@@ -107,7 +107,7 @@ function woocommerce_save_aff()
         $affData = AffLink::where('product_id', $product_id)->first();
         if(!empty($affData)){
             $items = json_decode($affData->data);
-            foreach ( $items as $item ) {
+            foreach($items as $item ) {
                 $i++;
                 include __DIR__ . '/templates/aff_tab_content_item.php';
             }
@@ -140,7 +140,7 @@ function save_affs( $data = false, int $product_id) {
         $data = stripslashes_deep( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
     }
 
-    if ( isset( $data['aff_title'], $data['aff_link'] ) ) {
+    if(isset($data['aff_title'], $data['aff_link'])) {
 
         $aff_title         = $data['aff_title'];
         $aff_type          = $data['aff_type'];
@@ -149,23 +149,23 @@ function save_affs( $data = false, int $product_id) {
         $aff_position      = $data['aff_position'];
         $aff_title_max_key = max( array_keys( $aff_title ) );
 
-        for ( $i = 0; $i <= $aff_title_max_key; $i++ ) {
-            if ( empty( $aff_title[ $i ] ) || ! isset( $aff_link[ $i ] ) ) {
+        for($i = 0; $i <= $aff_title_max_key; $i++) {
+            if(empty( $aff_title[$i]) || !isset($aff_link[$i]) ) {
                 continue;
             }
 
-            $aff_title    = wc_clean(wp_unslash($aff_title[$i]));
-            $aff_type     = wc_clean(wp_unslash($aff_type[$i]));
-            $aff_link     = esc_url_raw(wp_unslash( $aff_link[$i]));
-            $aff_price    = wc_clean(wp_unslash($aff_price[$i]));
-            $aff_position = wc_clean(wp_unslash($aff_position[$i]));
+            $title    = wc_clean(wp_unslash($aff_title[$i]));
+            $type     = wc_clean(wp_unslash($aff_type[$i]));
+            $link     = esc_url_raw(wp_unslash($aff_link[$i]));
+            $price    = wc_clean(wp_unslash($aff_price[$i]));
+            $position = absint(wc_clean(wp_unslash($aff_position[$i])));
 
             $affJson = collect([
-                'title'    => $aff_title,
-                'type'     => $aff_type,
-                'link'     => $aff_link,
-                'price'    => $aff_price,
-                'position' => $aff_position,
+                'title'    => $title,
+                'type'     => $type,
+                'link'     => $link,
+                'price'    => $price,
+                'position' => $position,
                 'visible'  => true,
             ]);
 
@@ -183,4 +183,94 @@ function save_affs( $data = false, int $product_id) {
     }
 
     return true;
+}
+
+/**
+ * Prepare attributes for save.
+ *
+ * @param array $data Attribute data.
+ *
+ * @return array
+ */
+function prepare_aff( $data = false, $product_id ) {
+    if($product_id == 0 || empty($product_id))
+        return false;
+
+    $affs = array();
+
+    if ( ! $data ) {
+        $data = stripslashes_deep( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+    }
+
+    if(isset($data['aff_title'], $data['aff_link'])) {
+
+        $aff_title         = $data['aff_title'];
+        $aff_type          = $data['aff_type'];
+        $aff_link          = $data['aff_link'];
+        $aff_price         = isset( $data['aff_price'] ) ? $data['aff_price'] : 0;
+        $aff_position      = $data['aff_position'];
+        $aff_title_max_key = max( array_keys( $aff_title ) );
+
+        for($i = 0; $i <= $aff_title_max_key; $i++) {
+            if(empty( $aff_title[$i]) || !isset($aff_link[$i]) ) {
+                continue;
+            }
+
+            $title    = wc_clean(wp_unslash($aff_title[$i]));
+            $type     = wc_clean(wp_unslash($aff_type[$i]));
+            $link     = esc_url_raw(wp_unslash($aff_link[$i]));
+            $price    = wc_clean(wp_unslash($aff_price[$i]));
+            $position = absint(wc_clean(wp_unslash($aff_position[$i])));
+
+            $affJson = collect([
+                'title'    => $title,
+                'type'     => $type,
+                'link'     => $link,
+                'price'    => $price,
+                'position' => $position,
+                'visible'  => true,
+            ]);
+
+            array_push($affs, $affJson);
+        }
+
+        $affData = AffLink::where('product_id', $product_id)->first();
+        if(empty($affData)){
+            $affData = new AffLink();
+        }
+
+        $affData->product_id = $product_id;
+        $affData->data = json_encode($affs);
+        $affData->save();
+    }
+
+    return true;
+}
+
+function saveAffs( $product_id) {
+    prepare_aff( $data = false, $product_id);
+}
+add_action( 'woocommerce_process_product_meta_simple', 'saveAffs', 10, 1 );
+add_action( 'woocommerce_process_product_meta_grouped', 'saveAffs', 10, 1 );
+add_action( 'woocommerce_process_product_meta_variable', 'saveAffs', 10, 1 );
+add_action( 'woocommerce_process_product_meta_external', 'saveAffs', 10, 1 );
+
+add_shortcode('affiliate-links', 'affiliateLink');
+
+function affiliateLink() {
+    global $post;
+
+    $product_id = $post->ID;
+
+    ob_start();
+    $affData = AffLink::where('product_id', $product_id)->first();
+    if(!empty($affData)){
+        $items = json_decode($affData->data);
+
+        include __DIR__ . '/templates/affiliate-links.php';
+    }
+
+    $html = ob_get_clean();
+
+    echo $html;
 }

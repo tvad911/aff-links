@@ -20,8 +20,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 				$product_id = absint( wp_unslash( $_GET['post'] ) );
 				$affData = \AnhDuong\Models\AffLink::where('product_id', $product_id)->first();
 		        if(!empty($affData)){
-		            $items = json_decode($affData->data);
-		            foreach ( $items as $item ) {
+		        	$items = json_decode($affData->data);
+				    foreach ( $items as $item ) {
 		                $i++;
 		                include __DIR__ . '/../templates/aff_tab_content_item.php';
 		            }

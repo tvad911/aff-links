@@ -1,0 +1,65 @@
+.wc-metaboxes-wrapper#product_aff_cf .expand-close {
+    float: right;
+    line-height: 28px;
+}
+.wc-metaboxes-wrapper .expand-close {
+    margin-right: 2px;
+    color: #777;
+    font-size: 12px;
+    font-style: italic;
+}
+
+.woocommerce_aff_data {
+    width: 100%;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
+}
+
+.product_aff_cf h3 .sort{
+    width: 17px;
+    height: 26px;
+    cursor: move;
+    float: right;
+    font-size: 15px;
+    font-weight: 400;
+    margin-right: 0.5em;
+    visibility: hidden;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.product_aff_cf h3 .sort::before{
+    content: "\f333";
+    font-family: Dashicons;
+    text-align: center;
+    line-height: 28px;
+    color: #999;
+    display: block;
+    width: 17px;
+    float: left;
+    height: 100%;
+}
+
+.wc-metaboxes-wrapper .wc-metabox.woocommerce_aff h3, .wc-metaboxes-wrapper .wc-metabox.woocommerce_aff h3 {
+    cursor: pointer;
+    padding: 0.5em 0.75em 0.5em 1em!important;
+}
+
+.affiliate-links{
+	border-top: 2px solid #000;
+	.group-aff{
+		.aff-title{
+            margin-bottom: 0;
+		}
+
+		.list-affs{
+			.aff-item{
+				a{
+					font-size: 1em;
+				}
+                margin-bottom: 0;
+			}
+			margin-bottom: 0;
+		}
+	}
+}

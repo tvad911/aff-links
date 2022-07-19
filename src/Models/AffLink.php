@@ -24,7 +24,7 @@ class AffLink extends Model {
     /**
      * Disable created_at and update_at columns, unless you have those.
      */
-    public $timestamps = false;
+    public $timestamps = true;
 
     /** Everything below this is best done in an abstract class that custom tables extend */
 
